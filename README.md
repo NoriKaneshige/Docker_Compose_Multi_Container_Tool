@@ -294,6 +294,7 @@ services:
     environment:
       - POSTGRES_PASSWORD=mypasswd
     volumes:
+    # we want to preserve data. Without this, docker-compose down deletes database.
       - drupal-data:/var/lib/postgresql/data
 
 # we can use named volumes without anything else in them
