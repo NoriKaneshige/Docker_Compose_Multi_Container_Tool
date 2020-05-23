@@ -93,6 +93,7 @@ services:
 ### 3) automatically bind mount that file
 ### 4) open up th port
 ### 5) and start dumping logs out to my screen.
+![docker_compose_up](https://github.com/NoriKaneshige/Docker_Compose_Multi_Container_Tool/blob/master/docker_compose_up.png)
 ```
 Koitaro@MacBook-Pro-3 compose-sample-2 % ls -alF
 total 16
@@ -113,4 +114,37 @@ services:
       - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
   web:
     image: httpd  # this will use httpd:latest
+    
+
+
+Koitaro@MacBook-Pro-3 compose-sample-2 % docker-compose up
+Creating network "compose-sample-2_default" with the default driver
+Pulling proxy (nginx:1.13)...
+1.13: Pulling from library/nginx
+f2aa67a397c4: Downloading [>                                                  ]  234.6kB/22.5MBulling fs layer
+f2aa67a397c4: Downloading [=>                                                 ]    464kB/22.5MBownloading [==================================================>] f2aa67a397c4: Pull complete
+3c091c23e29d: Pull complete
+4a99993b8636: Pull complete
+Digest: sha256:b1d09e9718890e6ebbbd2bc319ef1611559e30ce1b6f56b2e3b479d9da51dc35
+Status: Downloaded newer image for nginx:1.13
+Pulling web (httpd:)...
+latest: Pulling from library/httpd
+afb6ec6fdc1c: Already exists
+5a6b409207a3: Pull complete
+41e5e22239e2: Pull complete
+9829f70a6a6b: Pull complete
+3cd774fea202: Pull complete
+Digest: sha256:db9c3bca36edb5d961d70f83b13e65e552641e00a7eb80bf435cbe9912afcb1f
+Status: Downloaded newer image for httpd:latest
+Creating compose-sample-2_web_1   ... done
+Creating compose-sample-2_proxy_1 ... done
+Attaching to compose-sample-2_web_1, compose-sample-2_proxy_1
+web_1    | AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 172.18.0.2. Set the 'ServerName' directive globally to suppress this message
+web_1    | AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 172.18.0.2. Set the 'ServerName' directive globally to suppress this message
+web_1    | [Sat May 23 19:24:06.937947 2020] [mpm_event:notice] [pid 1:tid 139932259239040] AH00489: Apache/2.4.43 (Unix) configured -- resuming normal operations
+web_1    | [Sat May 23 19:24:06.948220 2020] [core:notice] [pid 1:tid 139932259239040] AH00094: Command line: 'httpd -D FOREGROUND'
+proxy_1  | 172.18.0.1 - - [23/May/2020:19:26:36 +0000] "GET / HTTP/1.1" 200 45 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36" "-"
+web_1    | 172.18.0.3 - - [23/May/2020:19:26:36 +0000] "GET / HTTP/1.0" 200 45
+proxy_1  | 172.18.0.1 - - [23/May/2020:19:26:36 +0000] "GET /favicon.ico HTTP/1.1" 404 196 "http://localhost/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36" "-"
+web_1    | 172.18.0.3 - - [23/May/2020:19:26:36 +0000] "GET /favicon.ico HTTP/1.0" 404 196
 ```
