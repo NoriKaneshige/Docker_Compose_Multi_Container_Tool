@@ -709,3 +709,8 @@ Removing image compose-sample-3_proxy
 Koitaro@MacBook-Pro-3 compose-sample-3 % docker image ls
 REPOSITORY                TAG                 IMAGE ID            CREATED             SIZE
 ```
+## "docker-compose up" automatically create Network, even if not manually specified in the compose file.
+## 'build context' in a compose file supposed to specify where the Dockerfile of the image is supposed to build from.
+## The "ports:" key in a compose file publishes the particular service on whatever port you specify, and is the docker run equivalent to the -p flag.
+## Usernames are typically an environment-specific setting, that can change often, so they are often set in environment variables.
+## DNS names (set as aliases) for containers in a compose file come from the service name declared in the .yml
