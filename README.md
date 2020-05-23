@@ -646,3 +646,7 @@ web_1    | 172.22.0.3 - - [23/May/2020:21:28:40 +0000] "GET /lib/bootstrap/css/b
 proxy_1  | 172.22.0.1 - - [23/May/2020:21:28:40 +0000] "GET /lib/bootstrap/css/bootstrap.min.css HTTP/1.1" 200 150996 "http://localhost/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36" "-"
 proxy_1  | 172.22.0.1 - - [23/May/2020:21:28:40 +0000] "GET /lib/bootstrap/js/bootstrap.min.js HTTP/1.1" 200 46653 "http://localhost/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36" "-"
 ```
+## Now, because I bind mounted that directory, I can edit the files live
+```
+
+```
