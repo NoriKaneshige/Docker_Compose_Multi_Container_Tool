@@ -577,6 +577,72 @@ drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/misc/normal
 ```
 # Adding Image Building to Compose Files
 ![using_compose_to_build](https://github.com/NoriKaneshige/Docker_Compose_Multi_Container_Tool/blob/master/using_compose_to_build.png)
+## docker-compose.yml
+### When I run the docker compose up command, it's going to first check if there is a specified image in my cache. If it doesn't find it, then it's going to use these build commands (build: in proxy) to look up the dockerfile and build my image. Once it is built the first time, it will not need to be really rebuilt very often. When I'm editing and developing on my website live, I have the configuration in the volumes in the web container part.
 ```
+version: '2'
 
+# based off compose-sample-2, only we build nginx.conf into image
+# uses sample site from https://startbootstrap.com/template-overviews/agency/
+
+services:
+  # two services below
+  # nginx proxy
+  proxy:
+    # here, instead of specifying the default image for nginx, we can build a custom one
+    build:
+      # I want it to build that dockerfile in this current directory.
+      context: .
+      # I'm telling the dockerfile I need to use
+      dockerfile: nginx.Dockerfile
+      # we can name image the image when it is built, but if we want to use docker-compose down -irm to delete
+      # the image automatically, we we don't need it here
+      # image: nginx-custom
+    ports:
+      - '80:80'
+
+  # apache web server
+  web:
+    image: httpd
+    volumes:
+      # we actually mount html source files into apache server
+      - ./html:/usr/local/apache2/htdocs/
+```
+## nginx.Dockerfile
+```
+FROM nginx:1.13
+
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+```
+## Let's do docker-compse up
+![using_compose_to_build_2](https://github.com/NoriKaneshige/Docker_Compose_Multi_Container_Tool/blob/master/using_compose_to_build_2.png)
+```
+Koitaro@MacBook-Pro-3 compose-sample-3 % docker-compose up
+Creating network "compose-sample-3_default" with the default driver
+Building proxy
+Step 1/2 : FROM nginx:1.13
+ ---> ae513a47849c
+Step 2/2 : COPY nginx.conf /etc/nginx/conf.d/default.conf
+ ---> d73f50db5cf6
+Successfully built d73f50db5cf6
+Successfully tagged compose-sample-3_proxy:latest
+WARNING: Image for service proxy was built because it did not already exist. To rebuild this image you must use `docker-compose build` or `docker-compose up --build`.
+Creating compose-sample-3_proxy_1 ... done
+Creating compose-sample-3_web_1   ... done
+Attaching to compose-sample-3_web_1, compose-sample-3_proxy_1
+web_1    | AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 172.22.0.2. Set the 'ServerName' directive globally to suppress this message
+web_1    | AH00558: httpd: Could not reliably determine the server's fully qualified domain name, using 172.22.0.2. Set the 'ServerName' directive globally to suppress this message
+web_1    | [Sat May 23 21:28:24.618488 2020] [mpm_event:notice] [pid 1:tid 140021325591680] AH00489: Apache/2.4.43 (Unix) configured -- resuming normal operations
+web_1    | [Sat May 23 21:28:24.619824 2020] [core:notice] [pid 1:tid 140021325591680] AH00094: Command line: 'httpd -D FOREGROUND'
+proxy_1  | 172.22.0.1 - - [23/May/2020:21:28:40 +0000] "GET / HTTP/1.1" 200 35099 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36" "-"
+web_1    | 172.22.0.3 - - [23/May/2020:21:28:40 +0000] "GET / HTTP/1.0" 200 35099
+web_1    | 172.22.0.3 - - [23/May/2020:21:28:40 +0000] "GET /css/agency.min.css HTTP/1.0" 200 13277
+proxy_1  | 172.22.0.1 - - [23/May/2020:21:28:40 +0000] "GET /css/agency.min.css HTTP/1.1" 200 13277 "http://localhost/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36" "-"
+proxy_1  | 172.22.0.1 - - [23/May/2020:21:28:40 +0000] "GET /lib/font-awesome/css/font-awesome.min.css HTTP/1.1" 200 31000 "http://localhost/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36" "-"
+web_1    | 172.22.0.3 - - [23/May/2020:21:28:40 +0000] "GET /lib/font-awesome/css/font-awesome.min.css HTTP/1.0" 200 31000
+web_1    | 172.22.0.3 - - [23/May/2020:21:28:40 +0000] "GET /lib/tether/tether.min.js HTTP/1.0" 200 24989
+proxy_1  | 172.22.0.1 - - [23/May/2020:21:28:40 +0000] "GET /lib/tether/tether.min.js HTTP/1.1" 200 24989 "http://localhost/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36" "-"
+web_1    | 172.22.0.3 - - [23/May/2020:21:28:40 +0000] "GET /lib/bootstrap/css/bootstrap.min.css HTTP/1.0" 200 150996
+proxy_1  | 172.22.0.1 - - [23/May/2020:21:28:40 +0000] "GET /lib/bootstrap/css/bootstrap.min.css HTTP/1.1" 200 150996 "http://localhost/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36" "-"
+proxy_1  | 172.22.0.1 - - [23/May/2020:21:28:40 +0000] "GET /lib/bootstrap/js/bootstrap.min.js HTTP/1.1" 200 46653 "http://localhost/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36" "-"
 ```
