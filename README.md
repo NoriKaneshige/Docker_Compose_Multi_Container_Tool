@@ -660,7 +660,7 @@ Removing compose-sample-3_proxy_1 ... done
 Removing compose-sample-3_web_1   ... done
 Removing network compose-sample-3_default
 
-# actually id doesn't delete image by default
+# actually it doesn't delete image by default
 Koitaro@MacBook-Pro-3 compose-sample-3 % docker image ls
 REPOSITORY                TAG                 IMAGE ID            CREATED             SIZE
 compose-sample-3_proxy    latest              d73f50db5cf6        31 minutes ago      109MB
