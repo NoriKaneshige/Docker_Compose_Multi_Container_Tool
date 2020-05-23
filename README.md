@@ -94,6 +94,7 @@ services:
 ### 4) open up th port
 ### 5) and start dumping logs out to my screen.
 ![docker_compose_up](https://github.com/NoriKaneshige/Docker_Compose_Multi_Container_Tool/blob/master/docker_compose_up.png)
+### This is actually the Apache server replying, not the Nginx server. The traffic is going through the Nginx reverse proxy. It's repeating the traffic over to the Apache server. The Apache server is responding with its default basic HTML file because we did not change anything. Then, Nginx is repeating it back to me.
 ```
 Koitaro@MacBook-Pro-3 compose-sample-2 % ls -alF
 total 16
@@ -147,4 +148,116 @@ proxy_1  | 172.18.0.1 - - [23/May/2020:19:26:36 +0000] "GET / HTTP/1.1" 200 45 "
 web_1    | 172.18.0.3 - - [23/May/2020:19:26:36 +0000] "GET / HTTP/1.0" 200 45
 proxy_1  | 172.18.0.1 - - [23/May/2020:19:26:36 +0000] "GET /favicon.ico HTTP/1.1" 404 196 "http://localhost/" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36" "-"
 web_1    | 172.18.0.3 - - [23/May/2020:19:26:36 +0000] "GET /favicon.ico HTTP/1.0" 404 196
+
+web_1    | 172.18.0.3 - - [23/May/2020:20:01:12 +0000] "GET / HTTP/1.0" 304 -
+proxy_1  | 172.18.0.1 - - [23/May/2020:20:01:12 +0000] "GET / HTTP/1.1" 304 0 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36" "-"
+```
+## Let's stop it with ctr C and then run it in the background
+## Also look at logs to see the same output
+```
+Gracefully stopping... (press Ctrl+C again to force)
+Stopping compose-sample-2_proxy_1 ... done
+Stopping compose-sample-2_web_1   ... done
+
+Koitaro@MacBook-Pro-3 compose-sample-2 % docker-compose up -d
+Starting compose-sample-2_proxy_1 ... done
+Starting compose-sample-2_web_1   ... done
+```
+## docker-compose --help
+```
+Koitaro@MacBook-Pro-3 compose-sample-2 % docker-compose --help
+Define and run multi-container applications with Docker.
+
+Usage:
+  docker-compose [-f <arg>...] [options] [COMMAND] [ARGS...]
+  docker-compose -h|--help
+
+Options:
+  -f, --file FILE             Specify an alternate compose file
+                              (default: docker-compose.yml)
+  -p, --project-name NAME     Specify an alternate project name
+                              (default: directory name)
+  --verbose                   Show more output
+  --log-level LEVEL           Set log level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  --no-ansi                   Do not print ANSI control characters
+  -v, --version               Print version and exit
+  -H, --host HOST             Daemon socket to connect to
+
+  --tls                       Use TLS; implied by --tlsverify
+  --tlscacert CA_PATH         Trust certs signed only by this CA
+  --tlscert CLIENT_CERT_PATH  Path to TLS certificate file
+  --tlskey TLS_KEY_PATH       Path to TLS key file
+  --tlsverify                 Use TLS and verify the remote
+  --skip-hostname-check       Don't check the daemon's hostname against the
+                              name specified in the client certificate
+  --project-directory PATH    Specify an alternate working directory
+                              (default: the path of the Compose file)
+  --compatibility             If set, Compose will attempt to convert keys
+                              in v3 files to their non-Swarm equivalent
+  --env-file PATH             Specify an alternate environment file
+
+Commands:
+  build              Build or rebuild services
+  config             Validate and view the Compose file
+  create             Create services
+  down               Stop and remove containers, networks, images, and volumes
+  events             Receive real time events from containers
+  exec               Execute a command in a running container
+  help               Get help on a command
+  images             List images
+  kill               Kill containers
+  logs               View output from containers
+  pause              Pause services
+  port               Print the public port for a port binding
+  ps                 List containers
+  pull               Pull service images
+  push               Push service images
+  restart            Restart services
+  rm                 Remove stopped containers
+  run                Run a one-off command
+  scale              Set number of containers for a service
+  start              Start services
+  stop               Stop services
+  top                Display the running processes
+  unpause            Unpause services
+  up                 Create and start containers
+  version            Show the Docker-Compose version information
+```
+## Let's list both containers running
+```
+Koitaro@MacBook-Pro-3 compose-sample-2 % docker-compose ps
+          Name                   Command          State         Ports
+----------------------------------------------------------------------------
+compose-sample-2_proxy_1   nginx -g daemon off;   Up      0.0.0.0:80->80/tcp
+compose-sample-2_web_1     httpd-foreground       Up      80/tcp
+```
+## Let's list all of the services running inside of them
+```
+Koitaro@MacBook-Pro-3 compose-sample-2 % docker-compose top
+compose-sample-2_proxy_1
+PID    USER   TIME                    COMMAND
+---------------------------------------------------------------
+2231   root   0:00   nginx: master process nginx -g daemon off;
+2421   101    0:00   nginx: worker process
+
+compose-sample-2_web_1
+PID    USER   TIME        COMMAND
+---------------------------------------
+2218   root   0:00   httpd -DFOREGROUND
+2331   bin    0:00   httpd -DFOREGROUND
+2332   bin    0:00   httpd -DFOREGROUND
+2333   bin    0:00   httpd -DFOREGROUND
+```
+## Stop containers by docker-compose down
+```
+Koitaro@MacBook-Pro-3 compose-sample-2 % docker-compose down
+Stopping compose-sample-2_proxy_1 ... done
+Stopping compose-sample-2_web_1   ... done
+Removing compose-sample-2_proxy_1 ... done
+Removing compose-sample-2_web_1   ... done
+Removing network compose-sample-2_default
+
+Koitaro@MacBook-Pro-3 compose-sample-2 % docker-compose ps
+Name   Command   State   Ports
+------------------------------
 ```
