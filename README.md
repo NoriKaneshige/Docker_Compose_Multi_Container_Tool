@@ -263,6 +263,410 @@ Name   Command   State   Ports
 ```
 ## Build a compose file for multi-container searvice
 ![build_a_compose_file](https://github.com/NoriKaneshige/Docker_Compose_Multi_Container_Tool/blob/master/build_a_compose_file.png)
+## docker-compose.yml file
 ```
+version: '2'
+# NOTE: move this answer file up a directory so it'll work
 
+services:
+  # we use drupal, so I call this drupal
+  drupal:
+    image: custom-drupal
+    build: .
+    ports:
+      # open up 8080 on my machine, and use port 80 in the container
+      # to check which port that container is listening on
+      # I could do docker pull drupal and do docker image inspect to see exposed ports
+      - "8080:80"
+    volumes:
+      - drupal-modules:/var/www/html/modules
+      - drupal-profiles:/var/www/html/profiles       
+      - drupal-sites:/var/www/html/sites      
+      - drupal-themes:/var/www/html/themes
+ 
+  postgres:
+    image: postgres:12.1
+    # we don't need any ports since we use the default port inside the network
+    # both going to be in the same Docker network, so I don't need for them to connect
+    # they just work over that network
+
+    # in postgres, we need to set up a password
+    environment:
+      - POSTGRES_PASSWORD=mypasswd
+    volumes:
+      - drupal-data:/var/lib/postgresql/data
+
+# we can use named volumes without anything else in them
+volumes:
+  drupal-data:
+  drupal-modules:
+  drupal-profiles:
+  drupal-sites:
+  drupal-themes:
+
+```
+## Dockerfile
+```
+FROM drupal:8.8.2
+
+
+RUN apt-get update && apt-get install -y git \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /var/www/html/themes
+
+RUN git clone --branch 8.x-3.x --single-branch --depth 1 https://git.drupal.org/project/bootstrap.git \
+    && chown -R www-data:www-data bootstrap
+
+WORKDIR /var/www/html
+```
+## Let's do docker-compose up
+## Go to localhost:8080
+
+```
+Koitaro@MacBook-Pro-3 answer % docker-compose up
+Building drupal
+Step 1/5 : FROM drupal:8.8.2
+8.8.2: Pulling from library/drupal
+6d28e14ab8c8: Pull complete
+9ecd958eae23: Pull complete
+4611cd46d612: Pull complete
+ad4a2514121d: Pull complete
+0b5e20585113: Pull complete
+41449f0f405d: Pull complete
+8ac46b57a971: Pull complete
+fbb79e9a209f: Pull complete
+2bbaf0b0b4e6: Pull complete
+f2eb2245bea2: Pull complete
+341ead679d30: Pull complete
+f57261f4f556: Pull complete
+36f9693fb790: Pull complete
+275c43c6b7cd: Pull complete
+a3cddf097b5e: Pull complete
+fad623710654: Pull complete
+Digest: sha256:a98fc1f914fdbfa68ec229a4f47e8d278b2cca9ed81cad488d742ffb69133131
+Status: Downloaded newer image for drupal:8.8.2
+ ---> 090e3f252532
+Step 2/5 : RUN apt-get update && apt-get install -y git     && rm -rf /var/lib/apt/lists/*
+ ---> Running in 403da0cbcbc0
+Ign:1 http://deb.debian.org/debian stretch InRelease
+Get:2 http://deb.debian.org/debian stretch-updates InRelease [91.0 kB]
+Get:3 http://deb.debian.org/debian buster InRelease [121 kB]
+Get:4 http://deb.debian.org/debian buster-updates InRelease [49.3 kB]
+Get:5 http://deb.debian.org/debian stretch Release [118 kB]
+Get:6 http://deb.debian.org/debian stretch Release.gpg [2410 B]
+Get:7 http://deb.debian.org/debian stretch-updates/main amd64 Packages [27.9 kB]
+Get:8 http://deb.debian.org/debian buster/main amd64 Packages [7905 kB]
+Get:9 http://deb.debian.org/debian buster-updates/main amd64 Packages [7380 B]
+Get:10 http://deb.debian.org/debian stretch/main amd64 Packages [7083 kB]
+Err:11 http://security.debian.org/debian-security stretch/updates InRelease
+  Temporary failure resolving 'security.debian.org'
+Get:12 http://security.debian.org/debian-security buster/updates InRelease [65.4 kB]
+Get:13 http://security.debian.org/debian-security buster/updates/main amd64 Packages [201 kB]
+Fetched 15.7 MB in 31s (497 kB/s)
+Reading package lists...
+W: Failed to fetch http://security.debian.org/debian-security/dists/stretch/updates/InRelease  Temporary failure resolving 'security.debian.org'
+W: Some index files failed to download. They have been ignored, or old ones used instead.
+Reading package lists...
+Building dependency tree...
+Reading state information...
+The following additional packages will be installed:
+  git-man less libcurl3-gnutls liberror-perl libpopt0 libx11-6 libx11-data
+  libxau6 libxcb1 libxdmcp6 libxext6 libxmuu1 openssh-client rsync xauth
+Suggested packages:
+  gettext-base git-daemon-run | git-daemon-sysvinit git-doc git-el git-email
+  git-gui gitk gitweb git-arch git-cvs git-mediawiki git-svn keychain
+  libpam-ssh monkeysphere ssh-askpass openssh-server
+The following NEW packages will be installed:
+  git git-man less libcurl3-gnutls liberror-perl libpopt0 libx11-6 libx11-data
+  libxau6 libxcb1 libxdmcp6 libxext6 libxmuu1 openssh-client rsync xauth
+0 upgraded, 16 newly installed, 0 to remove and 1 not upgraded.
+Need to get 8590 kB of archives.
+After this operation, 41.1 MB of additional disk space will be used.
+Get:1 http://deb.debian.org/debian stretch/main amd64 libcurl3-gnutls amd64 7.52.1-5+deb9u9 [290 kB]
+Get:2 http://deb.debian.org/debian stretch/main amd64 liberror-perl all 0.17024-1 [26.9 kB]
+Get:3 http://deb.debian.org/debian stretch/main amd64 git-man all 1:2.11.0-3+deb9u5 [1433 kB]
+Get:4 http://deb.debian.org/debian stretch/main amd64 git amd64 1:2.11.0-3+deb9u5 [4161 kB]
+Get:5 http://deb.debian.org/debian stretch/main amd64 libxau6 amd64 1:1.0.8-1 [20.7 kB]
+Get:6 http://deb.debian.org/debian stretch/main amd64 libpopt0 amd64 1.16-10+b2 [49.4 kB]
+Get:7 http://deb.debian.org/debian stretch/main amd64 less amd64 481-2.1 [126 kB]
+Get:8 http://deb.debian.org/debian stretch/main amd64 openssh-client amd64 1:7.4p1-10+deb9u7 [780 kB]
+Get:9 http://deb.debian.org/debian stretch/main amd64 libxdmcp6 amd64 1:1.1.2-3 [26.3 kB]
+Get:10 http://deb.debian.org/debian stretch/main amd64 libxcb1 amd64 1.12-1 [133 kB]
+Get:11 http://deb.debian.org/debian stretch/main amd64 libx11-data all 2:1.6.4-3+deb9u1 [287 kB]
+Get:12 http://deb.debian.org/debian stretch/main amd64 libx11-6 amd64 2:1.6.4-3+deb9u1 [748 kB]
+Get:13 http://deb.debian.org/debian stretch/main amd64 libxext6 amd64 2:1.3.3-1+b2 [52.5 kB]
+Get:14 http://deb.debian.org/debian stretch/main amd64 libxmuu1 amd64 2:1.1.2-2 [23.5 kB]
+Get:15 http://deb.debian.org/debian stretch/main amd64 rsync amd64 3.1.2-1+deb9u2 [393 kB]
+Get:16 http://deb.debian.org/debian stretch/main amd64 xauth amd64 1:1.0.9-1+b2 [39.6 kB]
+debconf: delaying package configuration, since apt-utils is not installed
+Fetched 8590 kB in 3s (2802 kB/s)
+Selecting previously unselected package libcurl3-gnutls:amd64.
+(Reading database ... 13173 files and directories currently installed.)
+Preparing to unpack .../00-libcurl3-gnutls_7.52.1-5+deb9u9_amd64.deb ...
+Unpacking libcurl3-gnutls:amd64 (7.52.1-5+deb9u9) ...
+Selecting previously unselected package liberror-perl.
+Preparing to unpack .../01-liberror-perl_0.17024-1_all.deb ...
+Unpacking liberror-perl (0.17024-1) ...
+Selecting previously unselected package git-man.
+Preparing to unpack .../02-git-man_1%3a2.11.0-3+deb9u5_all.deb ...
+Unpacking git-man (1:2.11.0-3+deb9u5) ...
+Selecting previously unselected package git.
+Preparing to unpack .../03-git_1%3a2.11.0-3+deb9u5_amd64.deb ...
+Unpacking git (1:2.11.0-3+deb9u5) ...
+Selecting previously unselected package libxau6:amd64.
+Preparing to unpack .../04-libxau6_1%3a1.0.8-1_amd64.deb ...
+Unpacking libxau6:amd64 (1:1.0.8-1) ...
+Selecting previously unselected package libpopt0:amd64.
+Preparing to unpack .../05-libpopt0_1.16-10+b2_amd64.deb ...
+Unpacking libpopt0:amd64 (1.16-10+b2) ...
+Selecting previously unselected package less.
+Preparing to unpack .../06-less_481-2.1_amd64.deb ...
+Unpacking less (481-2.1) ...
+Selecting previously unselected package openssh-client.
+Preparing to unpack .../07-openssh-client_1%3a7.4p1-10+deb9u7_amd64.deb ...
+Unpacking openssh-client (1:7.4p1-10+deb9u7) ...
+Selecting previously unselected package libxdmcp6:amd64.
+Preparing to unpack .../08-libxdmcp6_1%3a1.1.2-3_amd64.deb ...
+Unpacking libxdmcp6:amd64 (1:1.1.2-3) ...
+Selecting previously unselected package libxcb1:amd64.
+Preparing to unpack .../09-libxcb1_1.12-1_amd64.deb ...
+Unpacking libxcb1:amd64 (1.12-1) ...
+Selecting previously unselected package libx11-data.
+Preparing to unpack .../10-libx11-data_2%3a1.6.4-3+deb9u1_all.deb ...
+Unpacking libx11-data (2:1.6.4-3+deb9u1) ...
+Selecting previously unselected package libx11-6:amd64.
+Preparing to unpack .../11-libx11-6_2%3a1.6.4-3+deb9u1_amd64.deb ...
+Unpacking libx11-6:amd64 (2:1.6.4-3+deb9u1) ...
+Selecting previously unselected package libxext6:amd64.
+Preparing to unpack .../12-libxext6_2%3a1.3.3-1+b2_amd64.deb ...
+Unpacking libxext6:amd64 (2:1.3.3-1+b2) ...
+Selecting previously unselected package libxmuu1:amd64.
+Preparing to unpack .../13-libxmuu1_2%3a1.1.2-2_amd64.deb ...
+Unpacking libxmuu1:amd64 (2:1.1.2-2) ...
+Selecting previously unselected package rsync.
+Preparing to unpack .../14-rsync_3.1.2-1+deb9u2_amd64.deb ...
+Unpacking rsync (3.1.2-1+deb9u2) ...
+Selecting previously unselected package xauth.
+Preparing to unpack .../15-xauth_1%3a1.0.9-1+b2_amd64.deb ...
+Unpacking xauth (1:1.0.9-1+b2) ...
+Setting up git-man (1:2.11.0-3+deb9u5) ...
+Setting up libpopt0:amd64 (1.16-10+b2) ...
+Setting up less (481-2.1) ...
+debconf: unable to initialize frontend: Dialog
+debconf: (TERM is not set, so the dialog frontend is not usable.)
+debconf: falling back to frontend: Readline
+Processing triggers for mime-support (3.60) ...
+Setting up liberror-perl (0.17024-1) ...
+Setting up libcurl3-gnutls:amd64 (7.52.1-5+deb9u9) ...
+Setting up rsync (3.1.2-1+deb9u2) ...
+invoke-rc.d: could not determine current runlevel
+invoke-rc.d: policy-rc.d denied execution of restart.
+Processing triggers for libc-bin (2.24-11+deb9u4) ...
+Setting up libxdmcp6:amd64 (1:1.1.2-3) ...
+Setting up openssh-client (1:7.4p1-10+deb9u7) ...
+Setting up git (1:2.11.0-3+deb9u5) ...
+Setting up libx11-data (2:1.6.4-3+deb9u1) ...
+Setting up libxau6:amd64 (1:1.0.8-1) ...
+Setting up libxcb1:amd64 (1.12-1) ...
+Setting up libx11-6:amd64 (2:1.6.4-3+deb9u1) ...
+Setting up libxmuu1:amd64 (2:1.1.2-2) ...
+Setting up libxext6:amd64 (2:1.3.3-1+b2) ...
+Setting up xauth (1:1.0.9-1+b2) ...
+Processing triggers for libc-bin (2.24-11+deb9u4) ...
+Removing intermediate container 403da0cbcbc0
+ ---> 6734e7e56107
+Step 3/5 : WORKDIR /var/www/html/themes
+ ---> Running in d582e6521479
+Removing intermediate container d582e6521479
+ ---> b85f1bcecefd
+Step 4/5 : RUN git clone --branch 8.x-3.x --single-branch --depth 1 https://git.drupal.org/project/bootstrap.git     && chown -R www-data:www-data bootstrap
+ ---> Running in d4ef0d16c798
+Cloning into 'bootstrap'...
+Removing intermediate container d4ef0d16c798
+ ---> dfa6a3496c6a
+Step 5/5 : WORKDIR /var/www/html
+ ---> Running in f8c018403c15
+Removing intermediate container f8c018403c15
+ ---> bfbc2ee66a92
+Successfully built bfbc2ee66a92
+Successfully tagged custom-drupal:latest
+WARNING: Image for service drupal was built because it did not already exist. To rebuild this image you must use `docker-compose build` or `docker-compose up --build`.
+Pulling postgres (postgres:12.1)...
+12.1: Pulling from library/postgres
+bc51dd8edc1b: Pull complete
+d2b355dbb6c6: Pull complete
+d237363a1a91: Pull complete
+ff4b9d2fde66: Pull complete
+646492d166e7: Pull complete
+50eeac6fd5fb: Pull complete
+502963de6da8: Pull complete
+d7263f7627b9: Pull complete
+46b135c7e429: Pull complete
+259a29a883ed: Pull complete
+b3b8f133c3f4: Pull complete
+49e91678bd48: Pull complete
+15326bd3db00: Pull complete
+0aab6409ca4d: Pull complete
+Digest: sha256:5181eccc7c903e4f1beffa89a735cb7ed72e0c81d6c34c471552c3fa8bff0858
+Status: Downloaded newer image for postgres:12.1
+Creating answer_postgres_1 ... done
+Creating answer_drupal_1   ... done
+Attaching to answer_postgres_1, answer_drupal_1
+postgres_1  | The files belonging to this database system will be owned by user "postgres".
+postgres_1  | This user must also own the server process.
+postgres_1  |
+postgres_1  | The database cluster will be initialized with locale "en_US.utf8".
+postgres_1  | The default database encoding has accordingly been set to "UTF8".
+postgres_1  | The default text search configuration will be set to "english".
+postgres_1  |
+postgres_1  | Data page checksums are disabled.
+postgres_1  |
+postgres_1  | fixing permissions on existing directory /var/lib/postgresql/data ... ok
+postgres_1  | creating subdirectories ... ok
+postgres_1  | selecting dynamic shared memory implementation ... posix
+postgres_1  | selecting default max_connections ... 100
+postgres_1  | selecting default shared_buffers ... 128MB
+postgres_1  | selecting default time zone ... Etc/UTC
+postgres_1  | creating configuration files ... ok
+drupal_1    | AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.20.0.3. Set the 'ServerName' directive globally to suppress this message
+drupal_1    | AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 172.20.0.3. Set the 'ServerName' directive globally to suppress this message
+drupal_1    | [Sat May 23 21:00:35.997859 2020] [mpm_prefork:notice] [pid 1] AH00163: Apache/2.4.25 (Debian) PHP/7.3.15 configured -- resuming normal operations
+drupal_1    | [Sat May 23 21:00:35.997964 2020] [core:notice] [pid 1] AH00094: Command line: 'apache2 -D FOREGROUND'
+postgres_1  | running bootstrap script ... ok
+postgres_1  | performing post-bootstrap initialization ... ok
+postgres_1  | syncing data to disk ... ok
+postgres_1  |
+postgres_1  |
+postgres_1  | Success. You can now start the database server using:
+postgres_1  |
+postgres_1  |     pg_ctl -D /var/lib/postgresql/data -l logfile start
+postgres_1  |
+postgres_1  | initdb: warning: enabling "trust" authentication for local connections
+postgres_1  | You can change this by editing pg_hba.conf or using the option -A, or
+postgres_1  | --auth-local and --auth-host, the next time you run initdb.
+postgres_1  | waiting for server to start....2020-05-23 21:00:37.032 UTC [45] LOG:  starting PostgreSQL 12.1 (Debian 12.1-1.pgdg100+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 8.3.0-6) 8.3.0, 64-bit
+postgres_1  | 2020-05-23 21:00:37.035 UTC [45] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+postgres_1  | 2020-05-23 21:00:37.052 UTC [46] LOG:  database system was shut down at 2020-05-23 21:00:36 UTC
+postgres_1  | 2020-05-23 21:00:37.060 UTC [45] LOG:  database system is ready to accept connections
+postgres_1  |  done
+postgres_1  | server started
+postgres_1  |
+postgres_1  | /usr/local/bin/docker-entrypoint.sh: ignoring /docker-entrypoint-initdb.d/*
+postgres_1  |
+postgres_1  | 2020-05-23 21:00:37.122 UTC [45] LOG:  received fast shutdown request
+postgres_1  | waiting for server to shut down....2020-05-23 21:00:37.125 UTC [45] LOG:  aborting any active transactions
+postgres_1  | 2020-05-23 21:00:37.130 UTC [45] LOG:  background worker "logical replication launcher" (PID 52) exited with exit code 1
+postgres_1  | 2020-05-23 21:00:37.131 UTC [47] LOG:  shutting down
+postgres_1  | 2020-05-23 21:00:37.155 UTC [45] LOG:  database system is shut down
+postgres_1  |  done
+postgres_1  | server stopped
+postgres_1  |
+postgres_1  | PostgreSQL init process complete; ready for start up.
+postgres_1  |
+postgres_1  | 2020-05-23 21:00:37.248 UTC [1] LOG:  starting PostgreSQL 12.1 (Debian 12.1-1.pgdg100+1) on x86_64-pc-linux-gnu, compiled by gcc (Debian 8.3.0-6) 8.3.0, 64-bit
+postgres_1  | 2020-05-23 21:00:37.248 UTC [1] LOG:  listening on IPv4 address "0.0.0.0", port 5432
+postgres_1  | 2020-05-23 21:00:37.249 UTC [1] LOG:  listening on IPv6 address "::", port 5432
+postgres_1  | 2020-05-23 21:00:37.253 UTC [1] LOG:  listening on Unix socket "/var/run/postgresql/.s.PGSQL.5432"
+postgres_1  | 2020-05-23 21:00:37.276 UTC [54] LOG:  database system was shut down at 2020-05-23 21:00:37 UTC
+postgres_1  | 2020-05-23 21:00:37.282 UTC [1] LOG:  database system is ready to accept connections
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:54 +0000] "GET / HTTP/1.1" 302 609 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:54 +0000] "GET /core/install.php HTTP/1.1" 200 4279 "-" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/assets/vendor/normalize-css/normalize.css?0 HTTP/1.1" 200 2916 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/misc/normalize-fixes.css?0 HTTP/1.1" 200 534 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/ajax-progress.module.css?0 HTTP/1.1" 200 817 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/autocomplete-loading.module.css?0 HTTP/1.1" 200 587 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/fieldgroup.module.css?0 HTTP/1.1" 200 429 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/align.module.css?0 HTTP/1.1" 200 552 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/container-inline.module.css?0 HTTP/1.1" 200 488 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/clearfix.module.css?0 HTTP/1.1" 200 556 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/details.module.css?0 HTTP/1.1" 200 455 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/item-list.module.css?0 HTTP/1.1" 200 489 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/hidden.module.css?0 HTTP/1.1" 200 984 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/js.module.css?0 HTTP/1.1" 200 567 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/nowrap.module.css?0 HTTP/1.1" 200 438 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/position-container.module.css?0 HTTP/1.1" 200 427 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/progress.module.css?0 HTTP/1.1" 200 687 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/reset-appearance.module.css?0 HTTP/1.1" 200 524 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/resize.module.css?0 HTTP/1.1" 200 490 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/sticky-header.module.css?0 HTTP/1.1" 200 478 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/tabledrag.module.css?0 HTTP/1.1" 200 971 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/tablesort.module.css?0 HTTP/1.1" 200 547 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/system.admin.css?0 HTTP/1.1" 200 2336 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/system.maintenance.css?0 HTTP/1.1" 200 746 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/stable/css/system/components/tree-child.module.css?0 HTTP/1.1" 200 558 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/base/elements.css?0 HTTP/1.1" 200 1279 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/base/print.css?0 HTTP/1.1" 200 955 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/layout/layout.css?0 HTTP/1.1" 200 487 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/base/typography.css?0 HTTP/1.1" 200 588 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/collapse-processed.css?0 HTTP/1.1" 200 667 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/breadcrumb.css?0 HTTP/1.1" 200 615 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/container-inline.css?0 HTTP/1.1" 200 517 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/field.css?0 HTTP/1.1" 200 545 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/form.css?0 HTTP/1.1" 200 1116 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/button.css?0 HTTP/1.1" 200 469 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/action-links.css?0 HTTP/1.1" 200 698 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/icons.css?0 HTTP/1.1" 200 602 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/link.css?0 HTTP/1.1" 200 503 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/exposed-filters.css?0 HTTP/1.1" 200 638 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/item-list.css?0 HTTP/1.1" 200 586 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/inline-form.css?0 HTTP/1.1" 200 627 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/links.css?0 HTTP/1.1" 200 544 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/menu.css?0 HTTP/1.1" 200 630 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/more-link.css?0 HTTP/1.1" 200 485 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/pager.css?0 HTTP/1.1" 200 494 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/tableselect.css?0 HTTP/1.1" 200 530 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/tablesort.css?0 HTTP/1.1" 200 458 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/textarea.css?0 HTTP/1.1" 200 483 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/admin-list.css?0 HTTP/1.1" 200 735 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/container-inline.css?0 HTTP/1.1" 200 513 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/content-header.css?0 HTTP/1.1" 200 454 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/tabledrag.css?0 HTTP/1.1" 200 492 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/tabs.css?0 HTTP/1.1" 200 605 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/container-inline.module.css?0 HTTP/1.1" 200 434 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/ui-dialog.css?0 HTTP/1.1" 200 494 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/buttons.css?0 HTTP/1.1" 200 1991 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/details.css?0 HTTP/1.1" 200 603 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/dropbutton.component.css?0 HTTP/1.1" 200 2110 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/field-ui.css?0 HTTP/1.1" 200 636 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/breadcrumb.css?0 HTTP/1.1" 200 435 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/classy/css/components/messages.css?0 HTTP/1.1" 200 953 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/help.css?0 HTTP/1.1" 200 436 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/node.css?0 HTTP/1.1" 200 319 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/menus-and-lists.css?0 HTTP/1.1" 200 626 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/entity-meta.css?0 HTTP/1.1" 200 999 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/messages.css?0 HTTP/1.1" 200 503 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/modules-page.css?0 HTTP/1.1" 200 657 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/form.css?0 HTTP/1.1" 200 2592 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/page-title.css?0 HTTP/1.1" 200 450 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/pager.css?0 HTTP/1.1" 200 745 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/tables.css?0 HTTP/1.1" 200 1227 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/system-status-report-general-info.css?0 HTTP/1.1" 200 1243 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/skip-link.css?0 HTTP/1.1" 200 639 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/system-status-report-counters.css?0 HTTP/1.1" 200 588 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/tabs.css?0 HTTP/1.1" 200 2226 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/tablesort-indicator.css?0 HTTP/1.1" 200 578 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/system-status-report.css?0 HTTP/1.1" 200 1402 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/panel.css?0 HTTP/1.1" 200 545 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/search-admin-settings.css?0 HTTP/1.1" 200 513 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/views-ui.css?0 HTTP/1.1" 200 2186 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/assets/vendor/jquery-once/jquery.once.min.js?v=2.2.0 HTTP/1.1" 200 777 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/theme/colors.css?0 HTTP/1.1" 200 477 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/theme/maintenance-page.css?0 HTTP/1.1" 200 1617 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/misc/drupal.js?v=8.8.2 HTTP/1.1" 200 2206 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/components/system-status-counter.css?0 HTTP/1.1" 200 1023 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/misc/drupalSettingsLoader.js?v=8.8.2 HTTP/1.1" 200 663 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/css/theme/install-page.css?0 HTTP/1.1" 200 902 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/assets/vendor/jquery/jquery.min.js?v=3.4.1 HTTP/1.1" 200 31030 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/misc/drupal.init.js?v=8.8.2 HTTP/1.1" 200 738 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/js/mobile.install.js?v=8.8.2 HTTP/1.1" 200 832 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/misc/states.js?v=8.8.2 HTTP/1.1" 200 3044 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/themes/seven/images/noise-low.png HTTP/1.1" 200 5440 "http://localhost:8080/core/themes/seven/css/theme/install-page.css?0" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/misc/icons/333333/caret-down.svg HTTP/1.1" 200 489 "http://localhost:8080/core/themes/seven/css/components/form.css?0" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:56 +0000] "GET /core/misc/favicon.ico HTTP/1.1" 200 5731 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 127.0.0.1 - - [23/May/2020:21:01:03 +0000] "OPTIONS * HTTP/1.0" 200 126 "-" "Apache/2.4.25 (Debian) PHP/7.3.15 (internal dummy connection)"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:01:03 +0000] "POST /core/install.php HTTP/1.1" 302 808 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:01:03 +0000] "GET /core/install.php?rewrite=ok&langcode=en HTTP/1.1" 200 3127 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
+drupal_1    | 127.0.0.1 - - [23/May/2020:21:01:04 +0000] "OPTIONS * HTTP/1.0" 200 126 "-" "Apache/2.4.25 (Debian) PHP/7.3.15 (internal dummy connection)"
+drupal_1    | 172.20.0.1 - - [23/May/2020:21:01:04 +0000] "GET /core/misc/icons/e29700/warning.svg HTTP/1.1" 200 701 "http://localhost:8080/core/themes/classy/css/components/messages.css?0" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
 ```
