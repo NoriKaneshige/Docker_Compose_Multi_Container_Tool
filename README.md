@@ -261,3 +261,8 @@ Koitaro@MacBook-Pro-3 compose-sample-2 % docker-compose ps
 Name   Command   State   Ports
 ------------------------------
 ```
+## Build a compose file for multi-container searvice
+![build_a_compose_file](https://github.com/NoriKaneshige/Docker_Compose_Multi_Container_Tool/blob/master/build_a_compose_file.png)
+```
+
+```
