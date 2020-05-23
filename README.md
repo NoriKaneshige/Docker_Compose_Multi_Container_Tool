@@ -84,3 +84,7 @@ services:
     depends_on:
       - mysql-primary
 ```
+## Trying out basic compouse commands
+![docker_compose_cli](https://github.com/NoriKaneshige/Docker_Compose_Multi_Container_Tool/blob/master/docker_compose_cli.png)
+```
+```
