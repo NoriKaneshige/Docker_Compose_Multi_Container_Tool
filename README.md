@@ -648,3 +648,63 @@ proxy_1  | 172.22.0.1 - - [23/May/2020:21:28:40 +0000] "GET /lib/bootstrap/js/bo
 ```
 ## Now, because I bind mounted that directory, I can edit the files live
 ![edited_live](https://github.com/NoriKaneshige/Docker_Compose_Multi_Container_Tool/blob/master/edited_live.png)
+## Let's stop and clean up
+## Note that it actually names containers, volumes, networks with the name of the directory as the project name to prevent name conflicts. It will always add the directory name on the beginning of all of the assets. Also we can use docker-compose down --rmi command to remove network, images etc.
+```
+Gracefully stopping... (press Ctrl+C again to force)
+Stopping compose-sample-3_proxy_1 ... done
+Stopping compose-sample-3_web_1   ... done
+
+Koitaro@MacBook-Pro-3 compose-sample-3 % docker-compose down
+Removing compose-sample-3_proxy_1 ... done
+Removing compose-sample-3_web_1   ... done
+Removing network compose-sample-3_default
+
+# actually id doesn't delete image by default
+Koitaro@MacBook-Pro-3 compose-sample-3 % docker image ls
+REPOSITORY                TAG                 IMAGE ID            CREATED             SIZE
+compose-sample-3_proxy    latest              d73f50db5cf6        31 minutes ago      109MB
+
+Koitaro@MacBook-Pro-3 compose-sample-3 % docker-compose down --help
+Stops containers and removes containers, networks, volumes, and images
+created by `up`.
+
+By default, the only things removed are:
+
+- Containers for services defined in the Compose file
+- Networks defined in the `networks` section of the Compose file
+- The default network, if one is used
+
+Networks and volumes defined as `external` are never removed.
+
+Usage: down [options]
+
+Options:
+    --rmi type              Remove images. Type must be one of:
+                              'all': Remove all images used by any service.
+                              'local': Remove only images that don't have a
+                              custom tag set by the `image` field.
+    -v, --volumes           Remove named volumes declared in the `volumes`
+                            section of the Compose file and anonymous volumes
+                            attached to containers.
+    --remove-orphans        Remove containers for services not defined in the
+                            Compose file
+    -t, --timeout TIMEOUT   Specify a shutdown timeout in seconds.
+                            (default: 10)
+
+Koitaro@MacBook-Pro-3 compose-sample-3 % docker-compose up -d
+Creating network "compose-sample-3_default" with the default driver
+Creating compose-sample-3_proxy_1 ... done
+Creating compose-sample-3_web_1   ... done
+
+Koitaro@MacBook-Pro-3 compose-sample-3 % docker-compose down --rmi local
+Stopping compose-sample-3_web_1   ... done
+Stopping compose-sample-3_proxy_1 ... done
+Removing compose-sample-3_web_1   ... done
+Removing compose-sample-3_proxy_1 ... done
+Removing network compose-sample-3_default
+Removing image compose-sample-3_proxy
+
+Koitaro@MacBook-Pro-3 compose-sample-3 % docker image ls
+REPOSITORY                TAG                 IMAGE ID            CREATED             SIZE
+```
