@@ -575,3 +575,8 @@ drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:54 +0000] "GET /core/install.php
 drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/assets/vendor/normalize-css/normalize.css?0 HTTP/1.1" 200 2916 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
 drupal_1    | 172.20.0.1 - - [23/May/2020:21:00:55 +0000] "GET /core/misc/normalize-fixes.css?0 HTTP/1.1" 200 534 "http://localhost:8080/core/install.php" "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.138 Safari/537.36"
 ```
+# Adding Image Building to Compose Files
+![using_compose_to_build](https://github.com/NoriKaneshige/Docker_Compose_Multi_Container_Tool/blob/master/using_compose_to_build.png)
+```
+
+```
