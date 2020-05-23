@@ -86,5 +86,31 @@ services:
 ```
 ## Trying out basic compouse commands
 ![docker_compose_cli](https://github.com/NoriKaneshige/Docker_Compose_Multi_Container_Tool/blob/master/docker_compose_cli.png)
+### here, we have two containers. The first one is nginx server that is configured as proxy, which is going to be listening on my port 80 on my local machine. Also, there is a volume command where we do a bind mount to a file in this directory called an nginx config file. For examle, this directory is a Git repository that stores these Config files for me. It allows me to map that file into the container.
+### docker compouse up command should
+### 1) start up both containers
+### 2) create a private network for the two containers
+### 3) automatically bind mount that file
+### 4) open up th port
+### 5) and start dumping logs out to my screen.
 ```
+Koitaro@MacBook-Pro-3 compose-sample-2 % ls -alF
+total 16
+drwxr-xr-x@  4 Koitaro  staff   128 May 14 15:31 ./
+drwxr-xr-x  36 Koitaro  staff  1152 May 14 15:38 ../
+-rw-r--r--   1 Koitaro  staff   297 May 14 15:31 docker-compose.yml
+-rw-r--r--   1 Koitaro  staff   298 May 14 15:31 nginx.conf
+
+# docker-compose.yml
+version: '3'
+
+services:
+  proxy:
+    image: nginx:1.13 # this will use the latest version of 1.13.x
+    ports:
+      - '80:80' # expose 80 on host and sent to 80 in container
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf:ro
+  web:
+    image: httpd  # this will use httpd:latest
 ```
